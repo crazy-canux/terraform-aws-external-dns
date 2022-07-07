@@ -1,4 +1,6 @@
-data "aws_caller_identity" "current" {}
+locals {
+  oidc_provider = trimprefix(var.oidc_issuer, "https://")
+}
 
 data "aws_iam_policy_document" "irsa-trust-policy" {
   statement {
@@ -21,7 +23,6 @@ data "aws_iam_policy_document" "irsa-trust-policy" {
     }
   }
 }
-
 
 data "aws_iam_policy_document" "route53-policy-document" {
   /*
@@ -54,12 +55,9 @@ data "aws_iam_policy_document" "route53-policy-document" {
 resource "aws_iam_role" "external-dns-role" {
   name        = "Proj-k8s-${var.cluster_name}-external-dns"
   description = "Role to enable external-dns/route53 via IRSA"
-
   permissions_boundary = "arn:aws:iam::aws:policy/PowerUserAccess"
-
   assume_role_policy = data.aws_iam_policy_document.irsa-trust-policy.json
 }
-
 
 resource "aws_iam_policy" "external-dns-policy" {
   name        = "Proj-k8s-${var.cluster_name}-external-dns-policy"

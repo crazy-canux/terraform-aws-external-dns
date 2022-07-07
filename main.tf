@@ -5,26 +5,28 @@ locals {
 
 data "aws_route53_zone" "hosted_zones" {
   for_each = toset(var.zone_fqdns)
-
   name         = "${each.value}."
   private_zone = true
 }
+
+data "aws_caller_identity" "current" {}
 
 ##############################
 # resource/module
 ##############################
 resource "kubernetes_namespace" "edns_namespace" {
   metadata {
-    name = var.namespace_name
+    name = var.namespace
   }
 }
 
 resource "helm_release" "external-dns" {
   name       = "external-dns"
   repository = var.chart_repo_url
+  version = var.chart_version
   chart      = "external-dns"
-  namespace  = var.namespace_name
-  values     = length(var.helm_values) > 0 ? var.helm_values : ["${file("${path.module}/helm-values.yaml")}"]
+  namespace  = var.namespace
+  values     = var.helm_values 
 
   set {
     name  = "txtOwnerId"
@@ -33,12 +35,21 @@ resource "helm_release" "external-dns" {
 
   set {
     name  = "serviceAccount.name"
-    value = var.service_account_name
+    value = var.service_account
   }
 
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = aws_iam_role.external-dns-role.arn
+  }
+
+    set {
+    name  = "image.repository"
+    value = var.image_repo
+  }
+  set {
+    name  = "image.tag"
+    value = var.image_tag
   }
 
   dynamic "set" {
@@ -57,7 +68,6 @@ resource "helm_release" "external-dns" {
       value = set.value
     }
   }
-
   depends_on = [
     aws_iam_role.external-dns-role,
     kubernetes_namespace.edns_namespace

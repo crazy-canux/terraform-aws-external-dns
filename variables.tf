@@ -4,6 +4,12 @@ variable "chart_repo_url" {
   default     = "https://kubernetes-sigs.github.io/external-dns/"
 }
 
+variable "chart_version" {
+  description = "external-dns chart version"
+  type        = string
+  default     = "1.10.0"
+}
+
 variable "cluster_name" {
   type = string
   description = "k8s cluster name"
@@ -20,7 +26,7 @@ variable "zone_fqdns" {
   type        = list(string)
 }
 
-variable "namespace_name" {
+variable "namespace" {
   description = "Name for external-dns namespace to be created by the module"
   type        = string
   default     = "external-dns"
@@ -37,9 +43,10 @@ variable "extra_domain_filters" {
   default     = []
 }
 
-variable "service_account_name" {
+variable "service_account" {
   description = "Service account name"
   type        = string
+  default = ""
 }
 
 variable "helm_values" {
@@ -57,4 +64,14 @@ variable "extra_set_values" {
     })
   )
   default = []
+}
+
+variable "image_repo" {
+  type = string
+  default = "k8s.gcr.io/external-dns/external-dns"
+}
+
+variable "image_tag" {
+  type = string
+  default = "v0.12.0"
 }
